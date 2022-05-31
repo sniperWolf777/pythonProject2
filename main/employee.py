@@ -15,37 +15,37 @@ if __name__ == '__main__':
 
 
 
-    empDF = spark.read.option("multiline", True).csv(r"C:\Users\SHREE\PycharmProjects\pythonProject2\Sourcefile\employee_project.csv", header=True, inferSchema=True)
+    srcDF = spark.read.option("multiline", True).csv(r"C:\Users\SHREE\PycharmProjects\pythonProject2\Sourcefile\employee_project.csv", header=True, inferSchema=True)
 
 # replace (\n) by (' ').
-    empDF = empDF.withColumn("address", regexp_replace("address", r"\n", " "))
-    # empDF.show()
-    # empDF.printSchema()
+    srcDF = srcDF.withColumn("address", regexp_replace("address", r"\n", " "))
+    # srcDF.show()
+    # srcDF.printSchema()
 
     # Add Date.
-    empDF = empDF.withColumn("fromdate", current_date())
-    # empDF.show()
-    # empDF.cache()
+    srcDF = srcDF.withColumn("fromdate", current_date())
+    # srcDF.show()
+    # srcDF.cache()
 
     # create empty dataframe for Target File
 
-    schema = StructType([StructField("emp_id", StringType()),
-                         StructField("fname", StringType()),
-                         StructField("lname", StringType()),
-                         StructField("age", IntegerType()),
-                         StructField("salary", LongType()),
-                         StructField("dept_id", IntegerType()),
-                         StructField("address", StringType()),
-                         StructField("city", StringType()),
-                         StructField("state", StringType()),
-                         StructField("mobile_number", DoubleType()),
-                         StructField("fromdate", DateType())
+    schema = StructType([StructField("tgt_emp_id", StringType()),
+                         StructField("tgt_fname", StringType()),
+                         StructField("tgt_lname", StringType()),
+                         StructField("tgt_age", IntegerType()),
+                         StructField("tgt_salary", LongType()),
+                         StructField("tgt_dept_id", IntegerType()),
+                         StructField("tgt_address", StringType()),
+                         StructField("tgt_city", StringType()),
+                         StructField("tgt_state", StringType()),
+                         StructField("tgt_mobile_number", DoubleType()),
+                         StructField("tgt_fromdate", DateType())
                          ])
     TargetDF = spark.createDataFrame([], schema=schema)
     # TargetDF.show()
 
     # left outer join on source and target
-    emp_df = empDF.join(TargetDF, empDF.emp_id == TargetDF.emp_id, 'left')
+    emp_df = srcDF.join(TargetDF, srcDF.emp_id == TargetDF.tgt_emp_id, 'left')
 
     emp_df.show()
 
@@ -54,14 +54,14 @@ if __name__ == '__main__':
 
 # insert flag
 
-    scd_df = emp_df.withColumn("insertflag", when((emp_df.emp_id2 != emp_df.emp_id) |
-                               emp_df.emp_id.isNull(), 'Y').otherwise('NA')).withColumn('emp_id2', col('emp_id').alias('emp_id2'))
+    scd_df = emp_df.withColumn("insertflag", when((emp_df.emp_id != emp_df.tgt_emp_id) |
+                               emp_df.emp_id.isNull(), 'Y').otherwise('NA'))
 
-    # scd_df.show()
+    scd_df.show()
 
 # update flag
 
-    # scd_df1 = scd_df.withColumn("updateflag", when(scd_df.emp_id == scd_df.emp_id,'Y')
+    # scd_df1 = scd_df.withColumn("updateflag", when(scd_df.emp_id == scd_df.tgt_emp_id,'Y')
     #                             .otherwise('NA'))
     # scd_df1.show()
 
